@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 1. Check if user is already logged in when page loads
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem("token");
@@ -14,7 +15,8 @@ export const AuthProvider = ({ children }) => {
         try {
           const profile = await authenticatedFetch("/auth/me");
           setUser(profile);
-        } catch {
+        } catch (err) {
+          console.error("Session invalid:", err);
           localStorage.removeItem("token");
         }
       }
@@ -23,8 +25,8 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // 2. Login Logic (Matches FastAPI OAuth2 Form Data requirement)
   const login = async (email, password) => {
-    // 1. Login to get token
     const formData = new URLSearchParams();
     formData.append("username", email);
     formData.append("password", password);
@@ -42,21 +44,25 @@ export const AuthProvider = ({ children }) => {
 
     const data = await response.json();
     localStorage.setItem("token", data.access_token);
-
-    // 2. Fetch Profile to get Role
+    
+    // Fetch full profile to get role
     const profile = await authenticatedFetch("/auth/me");
     setUser(profile);
     
-    return profile.role; // "client_admin" or "super_admin"
+    return profile.role; // Returns "client_admin" or "super_admin"
   };
 
+  // 3. Register Logic
   const register = async (email, password, name) => {
     await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, name }),
-    }).then(res => {
-      if (!res.ok) throw new Error("Registration failed. Email might exist.");
+    }).then(async (res) => {
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Registration failed");
+        }
     });
   };
 

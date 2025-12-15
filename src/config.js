@@ -1,3 +1,4 @@
+// Point this to your FastAPI backend
 export const API_BASE_URL = "http://localhost:8000/api";
 
 export const authenticatedFetch = async (endpoint, options = {}) => {
@@ -17,6 +18,7 @@ export const authenticatedFetch = async (endpoint, options = {}) => {
     headers,
   });
 
+  // If token is expired/invalid, auto-logout
   if (response.status === 401) {
     localStorage.removeItem("token");
     window.location.href = "/login";
@@ -25,7 +27,7 @@ export const authenticatedFetch = async (endpoint, options = {}) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || "Request failed");
+    throw new Error(errorData.detail || "API Request Failed");
   }
 
   return response.json();
