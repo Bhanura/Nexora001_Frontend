@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:widget": "vite build --config src/widget/vite.widget.config.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -31,7 +32,8 @@
     "globals": "^16.5.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
-    "vite": "npm:rolldown-vite@7.2.5"
+    "vite": "npm:rolldown-vite@7.2.5",
+    "vite-plugin-css-injected-by-js": "^3.5.2"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
