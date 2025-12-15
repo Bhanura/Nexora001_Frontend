@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Loader2, BookOpen } from "lucide-react";
 import { authenticatedFetch } from "../../config";
-import { Card, CardHeader } from "../ui/Card";
+import { Card } from "../ui/Card";
 
 export default function ChatPreview() {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I am your AI assistant. Ask me anything about your data." }
+    { role: "assistant", content: "Hi! How can I help with your data today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,8 +29,11 @@ export default function ChatPreview() {
         method: "POST",
         body: JSON.stringify({ message: userMsg, use_history: true })
       });
-      
-      setMessages(prev => [...prev, { role: "assistant", content: res.answer }]);
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: res.answer, 
+        sources: res.sources // Store sources to display later
+      }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "Error: " + err.message }]);
     } finally {
@@ -39,46 +42,83 @@ export default function ChatPreview() {
   };
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader title="Live Preview" description="Test your chatbot behavior here." icon={MessageSquare} />
+    <Card className="h-[500px] flex flex-col shadow-md border-gray-200">
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-brand-50 text-brand-600 rounded-lg"><Bot size={18} /></div>
+          <span className="font-semibold text-sm text-gray-900">Bot Preview</span>
+        </div>
+        <div className="flex gap-1.5">
+           <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
+           <span className="text-xs text-gray-500">Online</span>
+        </div>
+      </div>
       
-      {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-gray-50/50" ref={scrollRef}>
         {messages.map((m, i) => (
-          <div key={i} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-              m.role === 'user' ? 'bg-brand-100 text-brand-600' : 'bg-green-100 text-green-600'
+          <div key={i} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''} animate-slide-up`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm text-xs ${
+              m.role === 'user' ? 'bg-white text-gray-600 border' : 'bg-gradient-to-br from-brand-600 to-brand-700 text-white'
             }`}>
-              {m.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+              {m.role === 'user' ? <User size={14} /> : <Bot size={14} />}
             </div>
-            <div className={`p-3 rounded-lg max-w-[80%] text-sm ${
-              m.role === 'user' ? 'bg-brand-600 text-white' : 'bg-white border border-gray-200 text-gray-800 shadow-sm'
-            }`}>
-              {m.content}
+            
+            <div className={`max-w-[85%] space-y-2`}>
+              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                m.role === 'user' 
+                  ? 'bg-white text-gray-800 border border-gray-100 rounded-tr-none' 
+                  : 'bg-brand-600 text-white rounded-tl-none'
+              }`}>
+                {m.content}
+              </div>
+
+              {/* Collapsible Sources */}
+              {m.sources && m.sources.length > 0 && (
+                <details className="group">
+                  <summary className="cursor-pointer list-none text-xs text-gray-500 flex items-center gap-1.5 hover:text-brand-600 transition-colors">
+                    <BookOpen size={12} /> 
+                    <span>{m.sources.length} Sources Used</span>
+                  </summary>
+                  <div className="mt-2 p-2 bg-white border border-gray-200 rounded-lg text-xs space-y-2 shadow-sm animate-fade-in">
+                    {m.sources.map((s, idx) => (
+                      <a 
+                        key={idx} 
+                        href={s.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block text-gray-600 hover:text-brand-600 hover:underline truncate"
+                      >
+                        {idx + 1}. {s.title || s.url} <span className="text-gray-400">({Math.round(s.score * 100)}%)</span>
+                      </a>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
           </div>
         ))}
         {loading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center"><Bot size={16} /></div>
-            <div className="bg-white border p-3 rounded-lg"><Loader2 className="animate-spin w-4 h-4 text-gray-400" /></div>
+             <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center shrink-0"><Bot size={14} /></div>
+             <div className="bg-gray-100 px-4 py-2 rounded-2xl rounded-tl-none">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+             </div>
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-100">
-        <form onSubmit={handleSend} className="flex gap-2">
+      <div className="p-3 bg-white border-t border-gray-100">
+        <form onSubmit={handleSend} className="flex gap-2 relative">
           <input
-            type="text" placeholder="Type a message..."
+            type="text" placeholder="Ask something..."
             value={input} onChange={(e) => setInput(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-full focus:ring-2 focus:ring-brand-500 outline-none text-sm"
+            className="flex-1 pl-4 pr-12 py-2.5 border border-gray-200 rounded-full focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none text-sm shadow-sm transition-all"
           />
           <button 
-            type="submit" disabled={loading}
-            className="p-2 bg-brand-600 text-white rounded-full hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            type="submit" disabled={loading || !input.trim()}
+            className="absolute right-1 top-1 p-1.5 bg-brand-600 text-white rounded-full hover:bg-brand-700 disabled:opacity-50 disabled:hover:bg-brand-600 transition-all"
           >
-            <Send size={18} />
+            <Send size={16} className={loading ? "opacity-0" : "ml-0.5"} />
           </button>
         </form>
       </div>
