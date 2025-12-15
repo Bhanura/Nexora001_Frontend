@@ -4,6 +4,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 // --- Pages ---
 import Login from "./pages/Login"; 
 import ClientDashboard from "./pages/ClientDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 
 const SuperAdminConsole = () => <div className="p-10 text-2xl text-red-600 font-bold">👮 Super Admin Console (Connected!)</div>;
 
@@ -43,7 +44,7 @@ function App() {
               path="/admin" 
               element={
                 <ProtectedRoute allowedRoles={['super_admin']}>
-                  <SuperAdminConsole />
+                  <SuperAdminDashboard />
                 </ProtectedRoute>
               } 
             />

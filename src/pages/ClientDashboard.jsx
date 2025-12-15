@@ -7,6 +7,7 @@ import DocumentList from "../components/features/DocumentList";
 import ProfileModal from "../components/features/ProfileModal";
 import { LogOut, LayoutGrid, Server, UserCog } from "lucide-react";
 import ThemeToggle from "../components/ui/ThemeToggle";
+import NotificationCenter from "../components/features/NotificationCenter";
 
 export default function ClientDashboard() {
   const { user, logout, setUser } = useAuth();
@@ -33,6 +34,7 @@ return (
             <Server size={12} /> System Operational
           </div>
           <div className="flex items-center gap-4 pl-6 border-l border-gray-100 dark:border-slate-800">
+            <NotificationCenter />
             <ThemeToggle />
             <div className="text-right hidden sm:block">
               <span className="block text-sm font-semibold text-gray-900 dark:text-slate-100">{user?.name}</span>
