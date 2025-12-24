@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { MessageSquare, LayoutDashboard, ArrowRight, Loader2 } from "lucide-react";
@@ -9,8 +9,20 @@ export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "", name: "" });
   const [error, setError] = useState("");
   
-  const { login, register } = useAuth();
+  const { login, register, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  
+  useEffect(() => {
+    
+    if (!authLoading && user) {
+      if (user.role === 'super_admin') {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
