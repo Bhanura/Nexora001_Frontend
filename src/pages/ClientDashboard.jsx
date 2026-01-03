@@ -8,6 +8,7 @@ import ProfileModal from "../components/features/ProfileModal";
 import { LogOut, LayoutGrid, Server, UserCog } from "lucide-react";
 import ThemeToggle from "../components/ui/ThemeToggle";
 import NotificationCenter from "../components/features/NotificationCenter";
+import CrawlJobList from "../components/features/CrawlJobList";
 
 export default function ClientDashboard() {
   const { user, logout, setUser } = useAuth();
@@ -67,6 +68,7 @@ return (
           <div className="lg:col-span-5 space-y-6">
             <div className="grid gap-6">
                <IngestPanel />
+               <CrawlJobList />
                <ApiKeyPanel />
             </div>
           </div>
