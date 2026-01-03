@@ -54,13 +54,13 @@ export default function CrawlJobList() {
     <Card>
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold mb-4">Recent Crawl Jobs</h3>
-        <div className="space-y-3">
+        <div className="space-y-3 custom-scrollbar max-h-96 overflow-y-auto">
           {jobs.map((job) => (
             <div
               key={job._id}
               className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <div className="flex items-center gap-3 flex-1">
+              <div className="flex items-center gap-3 flex-1 ">
                 {getStatusIcon(job.status)}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{job.url}</p>
