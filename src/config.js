@@ -1,5 +1,8 @@
-// Point this to your FastAPI backend
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+// API Base URL Configuration
+// In production (Docker): Uses /api (nginx reverse proxy)
+// In development: Uses localhost:8000 directly
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? "/api" : "http://localhost:8000/api");
 
 export const authenticatedFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem("token");
