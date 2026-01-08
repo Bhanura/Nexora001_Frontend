@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageSquare, X, Send, Bot, User, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "../config"; // Reusing your config!
+import MarkdownMessage from "./MarkdownMessage";
 
 // Helper: Generate a random session ID for visitors
 const getSessionId = () => {
@@ -14,15 +15,43 @@ const getSessionId = () => {
 
 export default function ChatWidget({ apiKey }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! How can I help you today?" }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chatbotConfig, setChatbotConfig] = useState({
+    chatbot_name: "AI Assistant",
+    chatbot_greeting: "Hello! How can I help you today?",
+    chatbot_personality: "friendly and helpful"
+  });
   const scrollRef = useRef(null);
   
   // Use a ref for session ID so it doesn't change
   const sessionId = useRef(getSessionId()).current;
+
+  // Fetch chatbot configuration
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/chat/widget-config`, {
+          headers: { "X-API-KEY": apiKey }
+        });
+        if (res.ok) {
+          const config = await res.json();
+          setChatbotConfig(config);
+          // Set initial greeting
+          setMessages([{ role: "assistant", content: config.chatbot_greeting }]);
+        } else {
+          // Use defaults
+          setMessages([{ role: "assistant", content: "Hello! How can I help you today?" }]);
+        }
+      } catch (err) {
+        console.error("Failed to load config:", err);
+        // Use defaults
+        setMessages([{ role: "assistant", content: "Hello! How can I help you today?" }]);
+      }
+    };
+    fetchConfig();
+  }, [apiKey]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -77,7 +106,7 @@ export default function ChatWidget({ apiKey }) {
           <div className="flex items-center gap-2">
             <Bot size={24} />
             <div>
-              <h3 className="font-bold text-sm">AI Support</h3>
+              <h3 className="font-bold text-sm">{chatbotConfig.chatbot_name}</h3>
               <p className="text-xs text-blue-100 flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span> Online
               </p>
@@ -100,7 +129,11 @@ export default function ChatWidget({ apiKey }) {
                <div className={`px-3 py-2 rounded-xl text-sm max-w-[80%] shadow-sm ${
                  m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-100 text-gray-800'
                }`}>
-                 {m.content}
+                 {m.role === 'user' ? (
+                   <p>{m.content}</p>
+                 ) : (
+                   <MarkdownMessage content={m.content} />
+                 )}
                </div>
             </div>
           ))}

@@ -14,8 +14,11 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the dashboard application
 RUN npm run build
+
+# Build the widget
+RUN npm run build:widget
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
@@ -23,8 +26,11 @@ FROM nginx:alpine
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built files from builder stage
+# Copy built dashboard files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy built widget file to root for easy embedding
+COPY --from=builder /app/dist-widget/widget.iife.js /usr/share/nginx/html/widget.iife.js
 
 # Install wget for health checks
 RUN apk add --no-cache wget

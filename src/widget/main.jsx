@@ -8,20 +8,15 @@ const MOUNT_POINT_ID = 'nexora-widget-root';
 
 console.log('[Nexora Widget] Script loaded');
 
-function init() {
-  console.log('[Nexora Widget] Initializing...');
+function init(apiKey) {
+  console.log('[Nexora Widget] Initializing with API key:', apiKey ? 'YES' : 'NO');
   
-  // 1. Look for configuration on the window object
-  const apiKey = window.NEXORA_CHATBOT_ID;
-
-  console.log('[Nexora Widget] API Key found:', apiKey ? 'YES' : 'NO');
-
   if (!apiKey) {
-    console.error("Nexora Widget: NEXORA_CHATBOT_ID not found in window.");
+    console.error("Nexora Widget: API key is required");
     return;
   }
 
-  // 2. Create a container div if it doesn't exist
+  // Create a container div if it doesn't exist
   let container = document.getElementById(MOUNT_POINT_ID);
   if (!container) {
     console.log('[Nexora Widget] Creating container div');
@@ -30,7 +25,7 @@ function init() {
     document.body.appendChild(container);
   }
 
-  // 3. Mount React
+  // Mount React
   console.log('[Nexora Widget] Mounting React component');
   const root = ReactDOM.createRoot(container);
   root.render(
@@ -41,9 +36,21 @@ function init() {
   console.log('[Nexora Widget] Widget rendered successfully');
 }
 
-// Ensure the DOM is loaded before running
-if (document.readyState === 'complete') {
-  init();
-} else {
-  window.addEventListener('load', init);
+// Auto-initialize if window.NEXORA_CHATBOT_ID is set (legacy mode)
+function autoInit() {
+  const apiKey = window.NEXORA_CHATBOT_ID;
+  if (apiKey) {
+    console.log('[Nexora Widget] Auto-initializing from window.NEXORA_CHATBOT_ID');
+    init(apiKey);
+  }
 }
+
+// Check for auto-init after DOM loads
+if (document.readyState === 'complete') {
+  autoInit();
+} else {
+  window.addEventListener('load', autoInit);
+}
+
+// Export the init function
+export { init };

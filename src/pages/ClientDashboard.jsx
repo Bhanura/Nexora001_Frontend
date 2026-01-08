@@ -5,6 +5,8 @@ import ApiKeyPanel from "../components/features/ApiKeyPanel";
 import ChatPreview from "../components/features/ChatPreview";
 import DocumentList from "../components/features/DocumentList";
 import ProfileModal from "../components/features/ProfileModal";
+import ChatbotSettingsPanel from "../components/features/ChatbotSettingsPanel";
+import WidgetEmbedPanel from "../components/features/WidgetEmbedPanel";
 import { LogOut, LayoutGrid, Server, UserCog } from "lucide-react";
 import ThemeToggle from "../components/ui/ThemeToggle";
 import NotificationCenter from "../components/features/NotificationCenter";
@@ -69,6 +71,8 @@ return (
             <div className="grid gap-6">
                <IngestPanel />
                <ApiKeyPanel />
+               <ChatbotSettingsPanel />
+               <WidgetEmbedPanel />
             </div>
           </div>
           <div className="lg:col-span-7">
