@@ -8,13 +8,17 @@ const MOUNT_POINT_ID = 'nexora-widget-root';
 
 console.log('[Nexora Widget] Script loaded');
 
-function init(apiKey) {
+function init(apiKey, options = {}) {
   console.log('[Nexora Widget] Initializing with API key:', apiKey ? 'YES' : 'NO');
   
   if (!apiKey) {
     console.error("Nexora Widget: API key is required");
     return;
   }
+
+  // Default API URL (for widgets hosted on same domain)
+  const apiUrl = options.apiUrl || window.location.origin + '/api';
+  console.log('[Nexora Widget] API URL:', apiUrl);
 
   // Create a container div if it doesn't exist
   let container = document.getElementById(MOUNT_POINT_ID);
@@ -30,7 +34,7 @@ function init(apiKey) {
   const root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
-      <ChatWidget apiKey={apiKey} />
+      <ChatWidget apiKey={apiKey} apiUrl={apiUrl} />
     </React.StrictMode>
   );
   console.log('[Nexora Widget] Widget rendered successfully');

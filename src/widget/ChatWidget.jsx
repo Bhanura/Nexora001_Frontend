@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageSquare, X, Send, Bot, User, Loader2 } from "lucide-react";
-import { API_BASE_URL } from "../config"; // Reusing your config!
 import MarkdownMessage from "./MarkdownMessage";
 
 // Helper: Generate a random session ID for visitors
@@ -13,7 +12,7 @@ const getSessionId = () => {
   return id;
 };
 
-export default function ChatWidget({ apiKey }) {
+export default function ChatWidget({ apiKey, apiUrl }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -40,7 +39,7 @@ export default function ChatWidget({ apiKey }) {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/chat/widget-config`, {
+        const res = await fetch(`${apiUrl}/chat/widget-config`, {
           headers: { "X-API-KEY": apiKey }
         });
         if (res.ok) {
@@ -59,13 +58,13 @@ export default function ChatWidget({ apiKey }) {
       }
     };
     fetchConfig();
-  }, [apiKey]);
+  }, [apiKey, apiUrl]);
 
   // Fetch data collection config
   useEffect(() => {
     const fetchDataCollectionConfig = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/chat/widget-data-collection-config`, {
+        const res = await fetch(`${apiUrl}/chat/widget-data-collection-config`, {
           headers: { "X-API-KEY": apiKey }
         });
         if (res.ok) {
@@ -82,7 +81,7 @@ export default function ChatWidget({ apiKey }) {
       }
     };
     fetchDataCollectionConfig();
-  }, [apiKey]);
+  }, [apiKey, apiUrl]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -100,7 +99,7 @@ export default function ChatWidget({ apiKey }) {
 
     try {
       // Direct fetch because authenticatedFetch uses localStorage 'token' (which visitors don't have)
-      const res = await fetch(`${API_BASE_URL}/chat/widget`, {
+      const res = await fetch(`${apiUrl}/chat/widget`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,7 +146,7 @@ export default function ChatWidget({ apiKey }) {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/user-data/submit`, {
+      const res = await fetch(`${apiUrl}/user-data/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -2,16 +2,20 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import SystemStats from "../components/features/SystemStats";
 import UserTable from "../components/features/UserTable";
+import ActivityLog from "../components/features/ActivityLog";
+import SystemHealth from "../components/features/SystemHealth";
+import Analytics from "../components/features/Analytics";
 import ThemeToggle from "../components/ui/ThemeToggle";
 import NotificationCenter from "../components/features/NotificationCenter"; // Add this
 import ProfileModal from "../components/features/ProfileModal"; // Add this
-import { LogOut, ShieldCheck, RefreshCw, UserPlus, Copy, Check, UserCog } from "lucide-react";
+import { LogOut, ShieldCheck, RefreshCw, UserPlus, Copy, Check, UserCog, Activity, Heart, BarChart3 } from "lucide-react";
 import { authenticatedFetch } from "../config";
 
 export default function SuperAdminDashboard() {
   const { user, logout } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("users"); // New: Tab state
   
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -90,9 +94,67 @@ export default function SuperAdminDashboard() {
 
         <SystemStats users={users} />
         
-        <div className="h-[600px]">
-           {/* We pass the setShowNotifyModal setter to UserTable so it can trigger the modal */}
-           <UserTable users={users} onUpdate={fetchUsers} onNotify={(email) => setShowNotifyModal(email)} />
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-slate-700 mb-6">
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`px-6 py-3 font-medium transition border-b-2 ${
+              activeTab === "users"
+                ? "border-brand-600 text-brand-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            <UserCog size={16} className="inline mr-2" />
+            Users
+          </button>
+          <button
+            onClick={() => setActiveTab("activity")}
+            className={`px-6 py-3 font-medium transition border-b-2 ${
+              activeTab === "activity"
+                ? "border-brand-600 text-brand-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            <Activity size={16} className="inline mr-2" />
+            Activity Logs
+          </button>
+          <button
+            onClick={() => setActiveTab("health")}
+            className={`px-6 py-3 font-medium transition border-b-2 ${
+              activeTab === "health"
+                ? "border-brand-600 text-brand-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            <Heart size={16} className="inline mr-2" />
+            System Health
+          </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`px-6 py-3 font-medium transition border-b-2 ${
+              activeTab === "analytics"
+                ? "border-brand-600 text-brand-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            }`}
+          >
+            <BarChart3 size={16} className="inline mr-2" />
+            Analytics
+          </button>
+        </div>
+        
+        <div className="min-h-[600px]">
+           {activeTab === "users" && (
+             <UserTable users={users} onUpdate={fetchUsers} onNotify={(email) => setShowNotifyModal(email)} />
+           )}
+           {activeTab === "activity" && (
+             <ActivityLog />
+           )}
+           {activeTab === "health" && (
+             <SystemHealth />
+           )}
+           {activeTab === "analytics" && (
+             <Analytics />
+           )}
         </div>
       </main>
 
