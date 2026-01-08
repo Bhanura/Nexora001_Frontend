@@ -23,6 +23,14 @@ export default function ChatWidget({ apiKey }) {
     chatbot_greeting: "Hello! How can I help you today?",
     chatbot_personality: "friendly and helpful"
   });
+  
+  // Feature 2: Data collection state
+  const [dataCollectionConfig, setDataCollectionConfig] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  
   const scrollRef = useRef(null);
   
   // Use a ref for session ID so it doesn't change
@@ -51,6 +59,29 @@ export default function ChatWidget({ apiKey }) {
       }
     };
     fetchConfig();
+  }, [apiKey]);
+
+  // Fetch data collection config
+  useEffect(() => {
+    const fetchDataCollectionConfig = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/chat/widget-data-collection-config`, {
+          headers: { "X-API-KEY": apiKey }
+        });
+        if (res.ok) {
+          const config = await res.json();
+          setDataCollectionConfig(config);
+          
+          // If timing is "immediately", show form right away
+          if (config.enabled && config.data_collection_timing === "immediately") {
+            setShowForm(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load data collection config:", err);
+      }
+    };
+    fetchDataCollectionConfig();
   }, [apiKey]);
 
   // Auto-scroll to bottom
@@ -85,10 +116,61 @@ export default function ChatWidget({ apiKey }) {
       const data = await res.json();
       
       setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+      
+      // Check if we should show form after first message
+      setMessageCount(prev => prev + 1);
+      if (
+        dataCollectionConfig?.enabled &&
+        dataCollectionConfig?.data_collection_timing === "after_first_message" &&
+        messageCount === 0 &&
+        !formSubmitted
+      ) {
+        setShowForm(true);
+      }
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: "I'm having trouble connecting right now." }]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    const requiredFields = dataCollectionConfig.custom_fields.filter(f => f.required);
+    for (const field of requiredFields) {
+      if (!formData[field.field_id] || formData[field.field_id].trim() === "") {
+        alert(`Please fill in: ${field.label}`);
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/user-data/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": apiKey
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          submitted_data: formData
+        })
+      });
+
+      if (res.ok) {
+        setFormSubmitted(true);
+        setShowForm(false);
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: "Thank you for sharing your details! I'll make sure the right person gets back to you." 
+        }]);
+      } else {
+        alert("Failed to submit form. Please try again.");
+      }
+    } catch (err) {
+      alert("Network error. Please check your connection.");
     }
   };
 
@@ -138,6 +220,52 @@ export default function ChatWidget({ apiKey }) {
             </div>
           ))}
           {loading && <div className="ml-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400"/></div>}
+          
+          {/* Data Collection Form */}
+          {showForm && dataCollectionConfig?.enabled && !formSubmitted && (
+            <div className="bg-white border border-blue-200 rounded-lg p-4 shadow-md">
+              <h4 className="font-semibold text-sm mb-2 text-gray-800">
+                {dataCollectionConfig.data_collection_message}
+              </h4>
+              <form onSubmit={handleFormSubmit} className="space-y-3">
+                {dataCollectionConfig.custom_fields
+                  .sort((a, b) => a.order - b.order)
+                  .map(field => (
+                    <div key={field.field_id}>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                      </label>
+                      {field.field_type === "textarea" ? (
+                        <textarea
+                          value={formData[field.field_id] || ""}
+                          onChange={(e) => setFormData({ ...formData, [field.field_id]: e.target.value })}
+                          placeholder={field.placeholder || ""}
+                          required={field.required}
+                          className="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          rows={3}
+                        />
+                      ) : (
+                        <input
+                          type={field.field_type}
+                          value={formData[field.field_id] || ""}
+                          onChange={(e) => setFormData({ ...formData, [field.field_id]: e.target.value })}
+                          placeholder={field.placeholder || ""}
+                          required={field.required}
+                          className="w-full px-2 py-1 text-xs border rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      )}
+                    </div>
+                  ))}
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition text-sm font-medium"
+                >
+                  Submit
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
         {/* Input */}

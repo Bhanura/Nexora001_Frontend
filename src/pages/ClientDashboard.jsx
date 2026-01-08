@@ -7,6 +7,8 @@ import DocumentList from "../components/features/DocumentList";
 import ProfileModal from "../components/features/ProfileModal";
 import ChatbotSettingsPanel from "../components/features/ChatbotSettingsPanel";
 import WidgetEmbedPanel from "../components/features/WidgetEmbedPanel";
+import UserDataCollectionPanel from "../components/features/UserDataCollectionPanel";
+import UserSubmissionsTable from "../components/features/UserSubmissionsTable";
 import { LogOut, LayoutGrid, Server, UserCog } from "lucide-react";
 import ThemeToggle from "../components/ui/ThemeToggle";
 import NotificationCenter from "../components/features/NotificationCenter";
@@ -71,6 +73,7 @@ return (
             <div className="grid gap-6">
                <IngestPanel />
                <ApiKeyPanel />
+               <UserDataCollectionPanel />
                <ChatbotSettingsPanel />
                <WidgetEmbedPanel />
             </div>
@@ -84,6 +87,9 @@ return (
         </div>
         <div className="h-[500px]">
           <DocumentList />
+        </div>
+        <div>
+          <UserSubmissionsTable />
         </div>
       </main>
 
