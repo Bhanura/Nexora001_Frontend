@@ -38,11 +38,10 @@ export default function UserDetailModal({ userId, onClose, onUpdate }) {
   };
 
   const revokeApiKey = async (keyId) => {
-    if (!confirm("Revoke this API key? This action cannot be undone.")) return;
+    if (!confirm("Revoke this API key? This action cannot be undone. The user will be notified.")) return;
     try {
-      await authenticatedFetch(`/admin/user/${userId}/api-key/revoke`, {
-        method: "POST",
-        body: JSON.stringify({ key_id: keyId })
+      await authenticatedFetch(`/admin/user/${userId}/api-key/${keyId}/revoke`, {
+        method: "POST"
       });
       fetchUserDetails();
       if (onUpdate) onUpdate();
@@ -291,28 +290,56 @@ function ApiKeysTab({ keys, onRevoke }) {
     );
   }
 
+  const getStatusBadge = (status) => {
+    if (status === "active") {
+      return (
+        <span className="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+          Active
+        </span>
+      );
+    } else if (status === "revoked") {
+      return (
+        <span className="px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+          Revoked
+        </span>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-3">
       {keys.map(key => (
         <div key={key._id} className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <p className="font-mono text-sm font-medium text-gray-900 dark:text-white">
-                {key.key_prefix}...
+              <div className="flex items-center gap-2 mb-2">
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {key.name || "API Key"}
+                </p>
+                {getStatusBadge(key.status)}
+              </div>
+              <p className="font-mono text-sm text-gray-600 dark:text-gray-400 mb-2">
+                {key.key_prefix}
               </p>
-              <div className="flex gap-4 text-xs text-gray-500 mt-2">
+              <div className="flex gap-4 text-xs text-gray-500">
                 <span>Created: {key.created_at ? new Date(key.created_at).toLocaleDateString() : 'N/A'}</span>
                 {key.last_used && (
                   <span>Last used: {new Date(key.last_used).toLocaleDateString()}</span>
                 )}
+                {key.revoked_at && (
+                  <span className="text-red-600">Revoked: {new Date(key.revoked_at).toLocaleDateString()}</span>
+                )}
               </div>
             </div>
-            <button
-              onClick={() => onRevoke(key._id)}
-              className="ml-4 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
-            >
-              Revoke
-            </button>
+            {key.status === "active" && (
+              <button
+                onClick={() => onRevoke(key._id)}
+                className="ml-4 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                Revoke
+              </button>
+            )}
           </div>
         </div>
       ))}

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { authenticatedFetch } from "../config";
 import IngestPanel from "../components/features/IngestPanel"; 
-import ApiKeyPanel from "../components/features/ApiKeyPanel";
+import ApiKeyManagement from "../components/features/ApiKeyManagement";
 import ChatPreview from "../components/features/ChatPreview";
 import DocumentList from "../components/features/DocumentList";
 import ProfileModal from "../components/features/ProfileModal";
@@ -18,6 +19,35 @@ export default function ClientDashboard() {
   const { user, logout, setUser } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [dashboardStats, setDashboardStats] = useState(null);
+
+  // Fetch dashboard statistics
+  useEffect(() => {
+    if (activeTab === "overview") {
+      fetchDashboardStats();
+    }
+  }, [activeTab]);
+
+  const fetchDashboardStats = async () => {
+    try {
+      // Fetch user's storage info which includes document count
+      const storageData = await authenticatedFetch("/auth/storage");
+      setDashboardStats({
+        totalDocuments: storageData.document_count || 0,
+        storageMB: storageData.total_mb || 0,
+        vectorCount: storageData.vector_count || 0,
+        chatSessions: storageData.chat_session_count || 0
+      });
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats:", err);
+      setDashboardStats({
+        totalDocuments: 0,
+        storageMB: 0,
+        vectorCount: 0,
+        chatSessions: 0
+      });
+    }
+  };
 
   // Helper to update local user state without page reload
   const handleProfileUpdate = (newData) => {
@@ -107,7 +137,7 @@ return (
 
       {/* Main Content */}
       <main className="max-w-[1600px] mx-auto p-6">
-        {activeTab === "overview" && <OverviewTab user={user} />}
+        {activeTab === "overview" && <OverviewTab user={user} stats={dashboardStats} onTabChange={setActiveTab} />}
         {activeTab === "knowledge" && <KnowledgeBaseTab />}
         {activeTab === "chatbot" && <ChatbotTab />}
         {activeTab === "api" && <ApiTab />}
@@ -144,7 +174,7 @@ function TabButton({ icon: Icon, label, active, onClick }) {
 }
 
 // Overview Tab - Dashboard with key metrics and quick actions
-function OverviewTab({ user }) {
+function OverviewTab({ user, stats, onTabChange }) {
   return (
     <div className="space-y-6">
       <div>
@@ -158,10 +188,30 @@ function OverviewTab({ user }) {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Total Documents" value="0" subtitle="Documents indexed" color="blue" />
-        <StatCard title="API Calls Today" value="0" subtitle="Requests processed" color="green" />
-        <StatCard title="Active Users" value="0" subtitle="Interactions today" color="purple" />
-        <StatCard title="Storage Used" value="0 MB" subtitle="of your plan" color="orange" />
+        <StatCard 
+          title="Total Documents" 
+          value={stats?.totalDocuments || 0} 
+          subtitle="Documents indexed" 
+          color="blue" 
+        />
+        <StatCard 
+          title="Vector Embeddings" 
+          value={stats?.vectorCount || 0} 
+          subtitle="Embeddings created" 
+          color="green" 
+        />
+        <StatCard 
+          title="Chat Sessions" 
+          value={stats?.chatSessions || 0} 
+          subtitle="Conversations" 
+          color="purple" 
+        />
+        <StatCard 
+          title="Storage Used" 
+          value={`${stats?.storageMB?.toFixed(2) || 0} MB`} 
+          subtitle="of your storage" 
+          color="orange" 
+        />
       </div>
 
       {/* Quick Actions */}
@@ -173,18 +223,21 @@ function OverviewTab({ user }) {
             title="Upload Documents" 
             description="Add knowledge to your chatbot"
             color="blue"
+            onClick={() => onTabChange("knowledge")}
           />
           <QuickActionCard 
             icon={MessageSquare} 
             title="Test Chatbot" 
             description="Preview your chatbot"
             color="purple"
+            onClick={() => onTabChange("chatbot")}
           />
           <QuickActionCard 
             icon={Key} 
             title="Get API Key" 
             description="Integrate with your app"
             color="green"
+            onClick={() => onTabChange("api")}
           />
         </div>
       </div>
@@ -192,7 +245,21 @@ function OverviewTab({ user }) {
       {/* Recent Activity */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 p-6 transition-colors">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 transition-colors">Recent Activity</h3>
-        <p className="text-gray-500 dark:text-slate-400 text-center py-8 transition-colors">No recent activity</p>
+        {stats && stats.totalDocuments > 0 ? (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-600 dark:text-slate-400">
+              📄 You have <strong>{stats.totalDocuments}</strong> documents in your knowledge base
+            </p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">
+              💬 <strong>{stats.chatSessions}</strong> chat sessions created
+            </p>
+            <p className="text-sm text-gray-600 dark:text-slate-400">
+              🔢 <strong>{stats.vectorCount}</strong> vector embeddings generated
+            </p>
+          </div>
+        ) : (
+          <p className="text-gray-500 dark:text-slate-400 text-center py-8 transition-colors">No recent activity</p>
+        )}
       </div>
     </div>
   );
@@ -256,8 +323,8 @@ function ApiTab() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ApiKeyPanel />
+      <div className="space-y-6">
+        <ApiKeyManagement />
         <WidgetEmbedPanel />
       </div>
     </div>
@@ -300,7 +367,7 @@ function StatCard({ title, value, subtitle, color }) {
 }
 
 // Quick Action Card Component
-function QuickActionCard({ icon: Icon, title, description, color }) {
+function QuickActionCard({ icon: Icon, title, description, color, onClick }) {
   const colors = {
     blue: "text-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400",
     green: "text-green-600 bg-green-50 dark:bg-green-900/20 dark:text-green-400",
@@ -308,12 +375,15 @@ function QuickActionCard({ icon: Icon, title, description, color }) {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-all border border-gray-200 dark:border-slate-700">
+    <button
+      onClick={onClick}
+      className="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-slate-700 cursor-pointer transition-all border border-gray-200 dark:border-slate-700 w-full text-left"
+    >
       <div className={`w-10 h-10 rounded-lg ${colors[color]} flex items-center justify-center mb-3 transition-colors`}>
         <Icon size={20} />
       </div>
       <h4 className="font-semibold text-gray-900 dark:text-white mb-1 transition-colors">{title}</h4>
       <p className="text-sm text-gray-600 dark:text-slate-400 transition-colors">{description}</p>
-    </div>
+    </button>
   );
 }
