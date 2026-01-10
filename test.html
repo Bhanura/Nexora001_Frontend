@@ -10,14 +10,19 @@
 <body>
     <h1>My Awesome Company</h1>
     <p>This mimics a client's website.</p>
-
-    <script>
-  window.NexoraWidget.init({
-    apiKey: 'nx_3zxRszgEXch33wNvP1QJ_NjDmAGcGShv',
-    position: 'bottom-right'
-  });
-</script>
-
-    <script src="./dist-widget/widget.iife.js"></script>
+    <!-- Option 2: Load widget from Nexora server (Recommended) -->
+    <!-- Option 2: Load widget from Nexora server (Recommended) -->
+      <script>
+        (function() {
+          var script = document.createElement('script');
+          script.src = 'http://localhost/widget.iife.js';
+          script.onload = function() {
+            window.NexoraWidget.init('nx_TMV8KWM4IjSBwLL4qtRih44ig0015KVK', {
+              apiUrl: 'http://localhost/api'
+            });
+          };
+          document.body.appendChild(script);
+        })();
+      </script>
 </body>
 </html>

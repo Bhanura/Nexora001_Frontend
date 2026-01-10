@@ -4,12 +4,40 @@ import { authenticatedFetch } from "../../config";
 import { Card } from "../ui/Card";
 
 export default function ChatPreview() {
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hi! How can I help with your data today?" }
-  ]);
+  const [chatbotConfig, setChatbotConfig] = useState({
+    chatbot_name: "AI Assistant",
+    chatbot_greeting: "Hi! How can I help with your data today?"
+  });
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
   const scrollRef = useRef(null);
+
+  // Load chatbot configuration
+  useEffect(() => {
+    loadChatbotConfig();
+  }, []);
+
+  const loadChatbotConfig = async () => {
+    try {
+      const res = await authenticatedFetch("/chat/settings/chatbot");
+      if (res.ok) {
+        const data = await res.json();
+        setChatbotConfig(data);
+        // Set initial greeting message from config
+        setMessages([{ role: "assistant", content: data.chatbot_greeting }]);
+      } else {
+        // Use defaults
+        setMessages([{ role: "assistant", content: chatbotConfig.chatbot_greeting }]);
+      }
+    } catch (err) {
+      console.error("Failed to load config:", err);
+      setMessages([{ role: "assistant", content: chatbotConfig.chatbot_greeting }]);
+    } finally {
+      setConfigLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -46,7 +74,9 @@ export default function ChatPreview() {
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white rounded-t-xl">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-brand-50 text-brand-600 rounded-lg"><Bot size={18} /></div>
-          <span className="font-semibold text-sm text-gray-900">Bot Preview</span>
+          <span className="font-semibold text-sm text-gray-900">
+            {configLoading ? "Loading..." : chatbotConfig.chatbot_name}
+          </span>
         </div>
         <div className="flex gap-1.5">
            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></div>
